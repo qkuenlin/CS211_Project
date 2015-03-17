@@ -13,6 +13,11 @@ float normalForce = 1;
 float mu = 0.03;
 float frictionMagnitude = normalForce * mu;
 
+PShape cylinder;
+ArrayList<PVector> cylinders = new ArrayList<PVector>();
+
+boolean topView = false; //true = top view mod ; false=Top view not activated
+
 Ball ball = new Ball(10);
 
 
@@ -20,32 +25,64 @@ void setup() {
   size(1000,800,P3D);
   frameRate(60);
   noStroke();
+  cylinder = loadShape("cylinder.obj");
+  cylinders.add(new PVector(50,0,50));
+  cylinders.add(new PVector(-50,0,-50));
+  cylinders.add(new PVector(-50,0,50));
   
 }
 
 void draw(){
-  camera(width/2, height/2, 400, 500, 350, 0, 0, 1, 0);
+  
+  if(!topView){
+    camera(0, -100, 400, 0, 0, 0, 0, 1, 0);
+  }
+  
+  
+  
   lightSpecular(204, 204, 204);
   directionalLight(50, 100, 125, 0, -1, 0);
   lightSpecular(100, 100, 100);
   directionalLight(50, 100, 125, 0, 1, 0);
   ambientLight(102, 102, 102);  
   background(200);
-  translate(width/2, height/2, 0);
   rotateZ(rotateZ);
   rotateY(rotateY);
   rotateX(rotateX);
+  if(topView){
+    camera(0, -300, 0, 0, 0, 0, 0, 0, 1);
+  }
   smooth(4);
   shininess(20);
   specular(204,102,0);
-  box(boxLength,boxThickness,boxLength);
+  box(boxLength,boxThickness,boxLength);  
+  
+  drawCylinders();
+  
   
   mouse_y = mouseY;
   mouse_x = mouseX;
   
-  ball.update();
-  ball.checkEdges();
+  if(!topView){
+    ball.update();  
+    ball.checkEdges();
+    ball.checkCylinderCollision();
+  }
+  
   ball.display();
+  
+}
+
+void drawCylinders() {
+  pushMatrix();
+  translate(0,-boxThickness/2, 0);
+  for(int i=0; i<cylinders.size(); i++){
+      pushMatrix();
+      translate(cylinders.get(i).x, 0, cylinders.get(i).z);
+      shape(cylinder,0,0,40,40); 
+      popMatrix();
+  }
+  popMatrix();
   
 }
 
@@ -57,19 +94,31 @@ void keyPressed() {
     else if (keyCode == RIGHT) {
       rotateY += 10*rotateSpeed;
     }
+    else if (keyCode == SHIFT) {
+      topView = true;
+    }
+  }
+}
+
+void  keyReleased() {
+  if (key == CODED) {
+    if (keyCode == SHIFT) {
+       topView = false;
+    }
   }
 }
 
 
 void mouseDragged(){
-  rotateZ -= rotateSpeed*(mouse_x-mouseX);
-  if(rotateZ > PI/3) rotateZ = PI/3;
-  else if (rotateZ < -PI/3)  rotateZ = -PI/3;
+  if(!topView){
+    rotateZ -= rotateSpeed*(mouse_x-mouseX);
+    if(rotateZ > PI/3) rotateZ = PI/3;
+    else if (rotateZ < -PI/3)  rotateZ = -PI/3;
   
-  rotateX += rotateSpeed*(mouse_y-mouseY);
-  if(rotateX > PI/3) rotateX = PI/3;
-   else if (rotateX < -PI/3)  rotateX = -PI/3;
-   
+    rotateX += rotateSpeed*(mouse_y-mouseY);
+    if(rotateX > PI/3) rotateX = PI/3;
+     else if (rotateX < -PI/3)  rotateX = -PI/3;
+  }
 }
 
 void mouseWheel(MouseEvent event){
@@ -116,6 +165,7 @@ class Ball {
     translate(location.x, location.y, location.z); 
     sphere(r);
     popMatrix();
+    
   }
   
   void checkEdges(){
@@ -137,4 +187,34 @@ class Ball {
        velocity.z = velocity.z * -1;
     }
   }
+  
+  void checkCylinderCollision(){
+    for(int i=0; i<cylinders.size(); i++){
+      
+      double distance = Math.sqrt(Math.pow(location.x-cylinders.get(i).x,2) + Math.pow(location.z-cylinders.get(i).z,2));
+      
+      if(distance-r <= 20){
+        PVector nTemp = PVector.sub(location,cylinders.get(i));           
+        
+        PVector n = new PVector(nTemp.x, nTemp.z);
+        
+        location.x = n.x+cylinders.get(i).x;
+        location.z = n.y+cylinders.get(i).z; 
+        n.normalize();
+        
+        PVector velocityTemp = new PVector(velocity.x, velocity.z); 
+        
+        float vectorDot = 2*PVector.dot(velocityTemp,n);
+        PVector tempV = new PVector(0,0);
+        PVector.mult(n,vectorDot,tempV);     
+        PVector.sub(velocityTemp, tempV, velocityTemp);
+              
+        velocity.x = velocityTemp.x;
+        velocity.z = velocityTemp.y;
+  
+      }
+    }
+  }
+  
+    
 }

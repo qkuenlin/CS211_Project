@@ -22,8 +22,8 @@ void setup() {
   openCylinder.beginShape(QUAD_STRIP);
   //draw the border of the cylinder
   for(int i=0; i<x.length; i++){
-    openCyinder.vertex(x[i], y[i], 0);
-    openCyinder.vertex(x[i], y[i], cylinderHeight);
+    openCylinder.vertex(x[i], y[i], 0);
+    openCylinder.vertex(x[i], y[i], cylinderHeight);
   }
   openCylinder.endShape();
 }
