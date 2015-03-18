@@ -20,16 +20,11 @@ boolean topView = false; //true = top view mod ; false=Top view not activated
 
 Ball ball = new Ball(10);
 
-
 void setup() {
   size(1000,800,P3D);
   frameRate(60);
   noStroke();
   cylinder = loadShape("cylinder.obj");
-  cylinders.add(new PVector(50,0,50));
-  cylinders.add(new PVector(-50,0,-50));
-  cylinders.add(new PVector(-50,0,50));
-  
 }
 
 void draw(){
@@ -58,7 +53,6 @@ void draw(){
   box(boxLength,boxThickness,boxLength);  
   
   drawCylinders();
-  
   
   mouse_y = mouseY;
   mouse_x = mouseX;
@@ -108,6 +102,12 @@ void  keyReleased() {
   }
 }
 
+void mouseClicked(){
+ if(topView){ 
+   
+   cylinders.add(new PVector((mouseX-width*0.5)/2.5,0,(mouseY-height*0.5)/2.5)); 
+ }
+}
 
 void mouseDragged(){
   if(!topView){
@@ -191,16 +191,16 @@ class Ball {
   void checkCylinderCollision(){
     for(int i=0; i<cylinders.size(); i++){
       
-      double distance = Math.sqrt(Math.pow(location.x-cylinders.get(i).x,2) + Math.pow(location.z-cylinders.get(i).z,2));
+     PVector n = new PVector(location.x-cylinders.get(i).x, location.z-cylinders.get(i).z);
+     double distance = n.mag();
       
-      if(distance-r <= 20){
-        PVector nTemp = PVector.sub(location,cylinders.get(i));           
+      if(distance-r <= 20){        
         
-        PVector n = new PVector(nTemp.x, nTemp.z);
+         n.normalize();
         
-        location.x = n.x+cylinders.get(i).x;
-        location.z = n.y+cylinders.get(i).z; 
-        n.normalize();
+        location.x = n.x*(20+r)+cylinders.get(i).x;
+        location.z = n.y*(20+r)+cylinders.get(i).z;       
+       
         
         PVector velocityTemp = new PVector(velocity.x, velocity.z); 
         
