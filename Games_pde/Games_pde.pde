@@ -16,7 +16,7 @@ float frictionMagnitude = normalForce * mu;
 PShape cylinder;
 ArrayList<PVector> cylinders = new ArrayList<PVector>();
 
-boolean topView = false; //true = top view mod ; false=Top view not activated
+boolean topView = false; //true = top view mode activated ; false= Top view not activated
 
 Ball ball = new Ball(10);
 
@@ -29,44 +29,56 @@ void setup() {
 
 void draw(){
   
+  //Normal Camera if topView is false
   if(!topView){
     camera(0, -100, 400, 0, 0, 0, 0, 1, 0);
-  }
+  } 
   
-  
-  
-  lightSpecular(204, 204, 204);
-  directionalLight(50, 100, 125, 0, -1, 0);
+  //Light
   lightSpecular(100, 100, 100);
   directionalLight(50, 100, 125, 0, 1, 0);
-  ambientLight(102, 102, 102);  
+  ambientLight(102, 102, 102);
+  
   background(200);
+  
+  //Rotation of plane
   rotateZ(rotateZ);
   rotateY(rotateY);
   rotateX(rotateX);
+  
+  //Camera on top of pane if topView is true
   if(topView){
     camera(0, -300, 0, 0, 0, 0, 0, 0, 1);
   }
+  
+  //Artistic effect :)
   smooth(4);
   shininess(20);
   specular(204,102,0);
-  box(boxLength,boxThickness,boxLength);  
   
+  //draw the plane
+  box(boxLength,boxThickness,boxLength); 
+  
+  //draw the cylinders
   drawCylinders();
   
+  //get latest mouse coordinates
   mouse_y = mouseY;
   mouse_x = mouseX;
   
+  //If topView is false, game continues. otherwise it freezes.
   if(!topView){
     ball.update();  
     ball.checkEdges();
     ball.checkCylinderCollision();
   }
   
+  //draw ball
   ball.display();
   
 }
 
+//Function to draw the cylinders
 void drawCylinders() {
   pushMatrix();
   translate(0,-boxThickness/2, 0);
@@ -103,13 +115,18 @@ void  keyReleased() {
 }
 
 void mouseClicked(){
- if(topView){ 
-   
-   cylinders.add(new PVector((mouseX-width*0.5)/2.5,0,(mouseY-height*0.5)/2.5)); 
+  //if topView is true, a cylinder is added where the mouse has been clicked
+ if(topView){
+   float x = (mouseX-width*0.5)/2.4;
+   float y = (mouseY-height*0.5)/2.4;
+   if( x < boxLength/2 && x > -boxLength/2 && y > -boxLength/2 && y < boxLength/2){
+   cylinders.add(new PVector(x,0,y)); 
+   }
  }
 }
 
 void mouseDragged(){
+  //if top view is false, the plan can be rotated. Otherwise, the plane stay still
   if(!topView){
     rotateZ -= rotateSpeed*(mouse_x-mouseX);
     if(rotateZ > PI/3) rotateZ = PI/3;
@@ -121,6 +138,7 @@ void mouseDragged(){
   }
 }
 
+// Adjust the speed of rotation
 void mouseWheel(MouseEvent event){
  float e = event.getCount();
  rotateSpeed *= pow(1.5,e);
@@ -142,6 +160,7 @@ class Ball {
      
   }
   
+  //Function to upate the ball position and velocity according to physics
   void update(){
     PVector friction = velocity.get();
     
@@ -157,6 +176,7 @@ class Ball {
     
   }
   
+  //diplay the ball
   void display(){ 
     shininess(30);
     specular(204,204,0);
@@ -168,6 +188,7 @@ class Ball {
     
   }
   
+  //Check if the ball touch the border of the plane. In this case the ball bounces on it by inverting the speed.
   void checkEdges(){
     if (location.x + r > boxLength/2) {
       location.x =boxLength/2 -r;
@@ -188,6 +209,7 @@ class Ball {
     }
   }
   
+  //Check if the ball collides with the cylinders.
   void checkCylinderCollision(){
     for(int i=0; i<cylinders.size(); i++){
       
