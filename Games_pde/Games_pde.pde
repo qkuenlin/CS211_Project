@@ -15,20 +15,48 @@ float frictionMagnitude = normalForce * mu;
 
 PShape cylinder;
 ArrayList<PVector> cylinders = new ArrayList<PVector>();
+//Cylinder radius = 20;
+
 
 boolean topView = false; //true = top view mode activated ; false= Top view not activated
 
 Ball ball = new Ball(10);
 
+
+PGraphics gameOverviewSurface;
+PGraphics barSurface;
+PGraphics scoreboardSurface;
+float currentScore = 0;
+float lastScore = 0;
+
+int barSurfaceHeight=100;
+int surfaceMargin = 5;
+
 void setup() {
-  size(1000,800,P3D);
+  size(500,500,P3D);
   frameRate(60);
   noStroke();
   cylinder = loadShape("cylinder.obj");
+  
+  barSurface = createGraphics(width, barSurfaceHeight, P2D);
+  gameOverviewSurface = createGraphics(barSurfaceHeight-2*surfaceMargin, barSurfaceHeight-2*surfaceMargin, P2D);
+  scoreboardSurface = createGraphics(barSurfaceHeight-2*surfaceMargin, barSurfaceHeight-2*surfaceMargin, P2D);
 }
 
 void draw(){
+  background(200);
   
+  //Draw UI
+  drawBarSurface();
+  image(barSurface,0,height - barSurfaceHeight);
+  drawGameOverviewSurface();
+  image(gameOverviewSurface, surfaceMargin, height - gameOverviewSurface.height- surfaceMargin);
+  drawScoreboardSurface();
+  image(scoreboardSurface, 2*surfaceMargin+gameOverviewSurface.width, height - scoreboardSurface.height- surfaceMargin);
+ 
+  
+  //Draw Game
+  pushMatrix();
   //Normal Camera if topView is false
   if(!topView){
     camera(0, -100, 400, 0, 0, 0, 0, 1, 0);
@@ -39,7 +67,7 @@ void draw(){
   directionalLight(50, 100, 125, 0, 1, 0);
   ambientLight(102, 102, 102);
   
-  background(200);
+
   
   //Rotation of plane
   rotateZ(rotateZ);
@@ -76,7 +104,62 @@ void draw(){
   //draw ball
   ball.display();
   
+  popMatrix();
+  
 }
+
+//Drawing code of GameOverview UI
+void drawGameOverviewSurface() {
+    float gameToSurfaceScale = gameOverviewSurface.height/boxLength;
+    gameOverviewSurface.beginDraw();
+    gameOverviewSurface.background(0,0,155);
+    gameOverviewSurface.noStroke();
+    //Draw Ball
+    gameOverviewSurface.fill(255,0,0); 
+    gameOverviewSurface.ellipse((ball.location.x+boxLength/2)*gameToSurfaceScale, (ball.location.z+boxLength/2)*gameToSurfaceScale, ball.r*gameToSurfaceScale*2, ball.r*gameToSurfaceScale*2);
+    //Draw Cylinders
+    gameOverviewSurface.fill(255); 
+    for(int i=0; i<cylinders.size(); i++){
+      gameOverviewSurface.ellipse((cylinders.get(i).x+boxLength/2)*gameToSurfaceScale, (cylinders.get(i).z+boxLength/2)*gameToSurfaceScale, 20*gameToSurfaceScale*2,20*gameToSurfaceScale*2);
+    }
+    gameOverviewSurface.endDraw();
+}
+
+//Drawing code of Bar UI
+void drawBarSurface(){
+  barSurface.beginDraw();
+  barSurface.background(245,241,222);
+  barSurface.endDraw();
+}
+
+//Drawing code of Scoreboard UI
+void drawScoreboardSurface(){
+  scoreboardSurface.beginDraw();
+  scoreboardSurface.background(0,0);
+  scoreboardSurface.stroke(255);
+  scoreboardSurface.fill(0,0);
+  scoreboardSurface.rect(0,0,scoreboardSurface.width-1, scoreboardSurface.height-1);
+  scoreboardSurface.fill(0);
+  scoreboardSurface.noStroke();
+  String s = "Total score:\n" + String.format("%.3f",currentScore) ;
+  scoreboardSurface.text(s, surfaceMargin, 0, 70, 80); 
+  s = "Velocity:\n" + String.format("%.3f", ball.velocity.mag()) ;
+  scoreboardSurface.text(s, surfaceMargin, (scoreboardSurface.width/3), 70, 80); 
+  s = "Last Score:\n" + String.format("%.3f", lastScore) ;
+  scoreboardSurface.text(s, surfaceMargin, (2*scoreboardSurface.width/3), 70, 80); 
+  scoreboardSurface.endDraw();
+}
+
+void updateScore(float gain){
+  lastScore = gain;
+  if(gain>=0){
+      if (gain>0.5) currentScore += gain; //"If" to avoid cheating by letting the ball on contact of cylinder
+  }else{
+    currentScore += gain;
+    if (currentScore<0) currentScore = 0;
+  }
+}
+
 
 //Function to draw the cylinders
 void drawCylinders() {
@@ -193,19 +276,27 @@ class Ball {
     if (location.x + r > boxLength/2) {
       location.x =boxLength/2 -r;
       velocity.x = velocity.x * -1;
+      //Update score
+      updateScore(-velocity.mag());
     }
     else if (location.x -r < -boxLength/2){  
       location.x = -boxLength/2 + r;    
        velocity.x = velocity.x * -1;
+       //Update score
+       updateScore(-velocity.mag());
     }
     
     if (location.z +r>boxLength/2) {
       location.z = boxLength/2 - r;
        velocity.z = velocity.z * -1;
+       //Update score
+       updateScore(-velocity.mag());
     }
     else if (location.z -r<-boxLength/2){
       location.z = -boxLength/2 + r;
        velocity.z = velocity.z * -1;
+       //Update score
+       updateScore(-velocity.mag());
     }
   }
   
@@ -233,6 +324,9 @@ class Ball {
               
         velocity.x = velocityTemp.x;
         velocity.z = velocityTemp.y;
+        
+        //Update Score
+        updateScore(velocity.mag());
   
       }
     }
