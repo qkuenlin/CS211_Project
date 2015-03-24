@@ -26,11 +26,18 @@ Ball ball = new Ball(10);
 PGraphics gameOverviewSurface;
 PGraphics barSurface;
 PGraphics scoreboardSurface;
+PGraphics barChartSurface;
+
 float currentScore = 0;
 float lastScore = 0;
+float maxScore = 0;
+ArrayList<Float> scoreList = new ArrayList<Float>();
 
 int barSurfaceHeight=100;
 int surfaceMargin = 5;
+int scrollHeight = 10;
+
+HScrollbar hs;
 
 void setup() {
   size(500,500,P3D);
@@ -41,6 +48,9 @@ void setup() {
   barSurface = createGraphics(width, barSurfaceHeight, P2D);
   gameOverviewSurface = createGraphics(barSurfaceHeight-2*surfaceMargin, barSurfaceHeight-2*surfaceMargin, P2D);
   scoreboardSurface = createGraphics(barSurfaceHeight-2*surfaceMargin, barSurfaceHeight-2*surfaceMargin, P2D);
+  barChartSurface = createGraphics(width-gameOverviewSurface.width-scoreboardSurface.width-4*surfaceMargin, barSurfaceHeight-2*surfaceMargin-scrollHeight, P2D);
+  
+  hs = new HScrollbar(3*surfaceMargin+gameOverviewSurface.width+scoreboardSurface.width,height - surfaceMargin - scrollHeight,width-gameOverviewSurface.width-scoreboardSurface.width-4*surfaceMargin, scrollHeight);
 }
 
 void draw(){
@@ -53,7 +63,11 @@ void draw(){
   image(gameOverviewSurface, surfaceMargin, height - gameOverviewSurface.height- surfaceMargin);
   drawScoreboardSurface();
   image(scoreboardSurface, 2*surfaceMargin+gameOverviewSurface.width, height - scoreboardSurface.height- surfaceMargin);
- 
+  drawBarChartSurface();
+  image(barChartSurface, 3*surfaceMargin+gameOverviewSurface.width+scoreboardSurface.width, height - barChartSurface.height- surfaceMargin - scrollHeight);
+   
+  hs.update();
+  hs.display();
   
   //Draw Game
   pushMatrix();
@@ -128,7 +142,7 @@ void drawGameOverviewSurface() {
 //Drawing code of Bar UI
 void drawBarSurface(){
   barSurface.beginDraw();
-  barSurface.background(245,241,222);
+  barSurface.background(225,221,202);
   barSurface.endDraw();
 }
 
@@ -153,11 +167,42 @@ void drawScoreboardSurface(){
 void updateScore(float gain){
   lastScore = gain;
   if(gain>=0){
-      if (gain>0.5) currentScore += gain; //"If" to avoid cheating by letting the ball on contact of cylinder
+      if (gain>0.5) { //"If" to avoid cheating by letting the ball on contact of cylinder
+        currentScore += gain;
+        scoreList.add(currentScore);
+      }
+       
   }else{
     currentScore += gain;
     if (currentScore<0) currentScore = 0;
+    scoreList.add(currentScore);
   }
+  if(currentScore > maxScore) maxScore = currentScore;
+  
+}
+
+//Drawing code of BarChart UI
+void drawBarChartSurface(){
+  barChartSurface.beginDraw();
+  barChartSurface.background(254,250,231);
+  //TODO !
+  
+  
+  
+  barChartSurface.noStroke();
+  
+  for(int i=0; i<scoreList.size(); i++){
+    
+    float rectWidth = barChartSurface.width/scoreList.size()*(hs.getPos()+0.05);
+    float rectHeight = scoreList.get(i)/maxScore * (barChartSurface.height-surfaceMargin);
+    
+    barChartSurface.fill(0,0,200);
+    barChartSurface.rect(i*rectWidth,barChartSurface.height + surfaceMargin - rectHeight,rectWidth, rectHeight); 
+  }
+  
+  
+  
+  barChartSurface.endDraw();
 }
 
 
