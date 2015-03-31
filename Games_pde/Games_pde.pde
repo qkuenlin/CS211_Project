@@ -37,10 +37,11 @@ int barSurfaceHeight=100;
 int surfaceMargin = 5;
 int scrollHeight = 10;
 
+
 HScrollbar hs;
 
 void setup() {
-  size(500,500,P3D);
+  size(800,800,P3D);
   frameRate(60);
   noStroke();
   cylinder = loadShape("cylinder.obj");
@@ -51,6 +52,7 @@ void setup() {
   barChartSurface = createGraphics(width-gameOverviewSurface.width-scoreboardSurface.width-4*surfaceMargin, barSurfaceHeight-2*surfaceMargin-scrollHeight, P2D);
   
   hs = new HScrollbar(3*surfaceMargin+gameOverviewSurface.width+scoreboardSurface.width,height - surfaceMargin - scrollHeight,width-gameOverviewSurface.width-scoreboardSurface.width-4*surfaceMargin, scrollHeight);
+  
 }
 
 void draw(){
@@ -66,8 +68,10 @@ void draw(){
   drawBarChartSurface();
   image(barChartSurface, 3*surfaceMargin+gameOverviewSurface.width+scoreboardSurface.width, height - barChartSurface.height- surfaceMargin - scrollHeight);
    
+   
   hs.update();
   hs.display();
+  fill(255);
   
   //Draw Game
   pushMatrix();
@@ -170,12 +174,13 @@ void updateScore(float gain){
       if (gain>0.5) { //"If" to avoid cheating by letting the ball on contact of cylinder
         currentScore += gain;
         scoreList.add(currentScore);
+        
       }
        
   }else{
     currentScore += gain;
     if (currentScore<0) currentScore = 0;
-    scoreList.add(currentScore);
+    else scoreList.add(currentScore);
   }
   if(currentScore > maxScore) maxScore = currentScore;
   
@@ -185,19 +190,20 @@ void updateScore(float gain){
 void drawBarChartSurface(){
   barChartSurface.beginDraw();
   barChartSurface.background(254,250,231);
-  //TODO !
-  
-  
+   
   
   barChartSurface.noStroke();
+  println(scoreList.size());
   
   for(int i=0; i<scoreList.size(); i++){
     
-    float rectWidth = barChartSurface.width/scoreList.size()*(hs.getPos()+0.05);
+    float rectWidth = max(9*hs.getPos()+1,(barChartSurface.width/scoreList.size()));
+    
     float rectHeight = scoreList.get(i)/maxScore * (barChartSurface.height-surfaceMargin);
     
+    
     barChartSurface.fill(0,0,200);
-    barChartSurface.rect(i*rectWidth,barChartSurface.height + surfaceMargin - rectHeight,rectWidth, rectHeight); 
+    barChartSurface.rect(barChartSurface.width-(scoreList.size()-i)*rectWidth,barChartSurface.height + surfaceMargin - rectHeight,rectWidth, rectHeight); 
   }
   
   
@@ -213,7 +219,8 @@ void drawCylinders() {
   for(int i=0; i<cylinders.size(); i++){
       pushMatrix();
       translate(cylinders.get(i).x, 0, cylinders.get(i).z);
-      shape(cylinder,0,0,40,40); 
+      
+      shape(cylinder,0,0); 
       popMatrix();
   }
   popMatrix();
@@ -245,8 +252,8 @@ void  keyReleased() {
 void mouseClicked(){
   //if topView is true, a cylinder is added where the mouse has been clicked
  if(topView){
-   float x = (mouseX-width*0.5)/2.4;
-   float y = (mouseY-height*0.5)/2.4;
+   float x = (mouseX-width*0.5)/1.5;
+   float y = (mouseY-height*0.5)/1.5;
    if( x < boxLength/2 && x > -boxLength/2 && y > -boxLength/2 && y < boxLength/2){
    cylinders.add(new PVector(x,0,y)); 
    }
