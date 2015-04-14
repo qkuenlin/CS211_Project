@@ -54,7 +54,7 @@ public class MainApp extends PApplet{
 	  size(800,800,P3D);
 	  frameRate(60);
 	  noStroke();
-	  cylinder = loadShape("../assets/cylinder.obj");
+	  cylinder = loadShape("../assets/cylinder/cylinder.obj");
 	  
 	  barSurface = createGraphics(width, barSurfaceHeight, P2D);
 	  gameOverviewSurface = createGraphics(barSurfaceHeight-2*surfaceMargin, barSurfaceHeight-2*surfaceMargin, P2D);
