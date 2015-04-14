@@ -1,0 +1,292 @@
+import java.util.ArrayList;
+
+import processing.core.*;
+import processing.event.MouseEvent;
+
+
+@SuppressWarnings("serial")
+public class MainApp extends PApplet{
+
+	
+	public float rotateY = 0;
+	public static float rotateZ = 0;
+	public static float rotateX = 0;
+	public float mouse_y = 0;
+	public float mouse_x = 0;
+	public float rotateSpeed = (float) 0.01;
+
+	public static float boxThickness = 8;
+	public float boxLength = 250;
+
+	public static float G = (float) (9.81/60);
+	public static float normalForce = 1;
+	public static float mu = (float) 0.03;
+	public static float frictionMagnitude = normalForce * mu;
+
+	public PShape cylinder;
+	public ArrayList<PVector> cylinders = new ArrayList<PVector>();
+	//Cylinder radius = 20;
+
+
+	public boolean topView = false; //true = top view mode activated ; false= Top view not activated
+
+	Ball ball = new Ball(10, this);
+
+
+	PGraphics gameOverviewSurface;
+	PGraphics barSurface;
+	PGraphics scoreboardSurface;
+	PGraphics barChartSurface;
+
+	float currentScore = 0;
+	float lastScore = 0;
+	float maxScore = 0;
+	ArrayList<Float> scoreList = new ArrayList<Float>();
+
+	int barSurfaceHeight=100;
+	int surfaceMargin = 5;
+	int scrollHeight = 10;
+
+
+	HScrollbar hs;
+
+	public void setup() {
+	  size(800,800,P3D);
+	  frameRate(60);
+	  noStroke();
+	  cylinder = loadShape("cylinder.obj");
+	  
+	  barSurface = createGraphics(width, barSurfaceHeight, P2D);
+	  gameOverviewSurface = createGraphics(barSurfaceHeight-2*surfaceMargin, barSurfaceHeight-2*surfaceMargin, P2D);
+	  scoreboardSurface = createGraphics(barSurfaceHeight-2*surfaceMargin, barSurfaceHeight-2*surfaceMargin, P2D);
+	  barChartSurface = createGraphics(width-gameOverviewSurface.width-scoreboardSurface.width-4*surfaceMargin, barSurfaceHeight-2*surfaceMargin-scrollHeight, P2D);
+	  
+	  hs = new HScrollbar(3*surfaceMargin+gameOverviewSurface.width+scoreboardSurface.width,height - surfaceMargin - scrollHeight,width-gameOverviewSurface.width-scoreboardSurface.width-4*surfaceMargin, scrollHeight, this);
+	  
+	}
+
+	public void draw(){
+	  background(200);
+	  
+	  //Draw UI
+	  drawBarSurface();
+	  image(barSurface,0,height - barSurfaceHeight);
+	  drawGameOverviewSurface();
+	  image(gameOverviewSurface, surfaceMargin, height - gameOverviewSurface.height- surfaceMargin);
+	  drawScoreboardSurface();
+	  image(scoreboardSurface, 2*surfaceMargin+gameOverviewSurface.width, height - scoreboardSurface.height- surfaceMargin);
+	  drawBarChartSurface();
+	  image(barChartSurface, 3*surfaceMargin+gameOverviewSurface.width+scoreboardSurface.width, height - barChartSurface.height- surfaceMargin - scrollHeight);
+	   
+	   
+	  hs.update();
+	  hs.display();
+	  fill(255);
+	  
+	  //Draw Game
+	  pushMatrix();
+	  //Normal Camera if topView is false
+	  if(!topView){
+	    camera(0, -100, 400, 0, 0, 0, 0, 1, 0);
+	  } 
+	  
+	  //Light
+	  lightSpecular(100, 100, 100);
+	  directionalLight(50, 100, 125, 0, 1, 0);
+	  ambientLight(102, 102, 102);
+	  
+
+	  
+	  //Rotation of plane
+	  rotateZ(rotateZ);
+	  rotateY(rotateY);
+	  rotateX(rotateX);
+	  
+	  //Camera on top of pane if topView is true
+	  if(topView){
+	    camera(0, -300, 0, 0, 0, 0, 0, 0, 1);
+	  }
+	  
+	  //Artistic effect :)
+	  smooth(4);
+	  shininess(20);
+	  specular(204,102,0);
+	  
+	  //draw the plane
+	  box(boxLength,boxThickness,boxLength); 
+	  
+	  //draw the cylinders
+	  drawCylinders();
+	  
+	  //get latest mouse coordinates
+	  mouse_y = mouseY;
+	  mouse_x = mouseX;
+	  
+	  //If topView is false, game continues. otherwise it freezes.
+	  if(!topView){
+	    ball.update();  
+	    ball.checkEdges();
+	    ball.checkCylinderCollision();
+	  }
+	  
+	  //draw ball
+	  ball.display();
+	  
+	  popMatrix();
+	  
+	}
+
+	//Drawing code of GameOverview UI
+	private void drawGameOverviewSurface() {
+	    float gameToSurfaceScale = gameOverviewSurface.height/boxLength;
+	    gameOverviewSurface.beginDraw();
+	    gameOverviewSurface.background(0,0,155);
+	    gameOverviewSurface.noStroke();
+	    //Draw Ball
+	    gameOverviewSurface.fill(255,0,0); 
+	    gameOverviewSurface.ellipse((ball.location.x+boxLength/2)*gameToSurfaceScale, (ball.location.z+boxLength/2)*gameToSurfaceScale, ball.r*gameToSurfaceScale*2, ball.r*gameToSurfaceScale*2);
+	    //Draw Cylinders
+	    gameOverviewSurface.fill(255); 
+	    for(int i=0; i<cylinders.size(); i++){
+	      gameOverviewSurface.ellipse((cylinders.get(i).x+boxLength/2)*gameToSurfaceScale, (cylinders.get(i).z+boxLength/2)*gameToSurfaceScale, 20*gameToSurfaceScale*2,20*gameToSurfaceScale*2);
+	    }
+	    gameOverviewSurface.endDraw();
+	}
+
+	//Drawing code of Bar UI
+	private void drawBarSurface(){
+	  barSurface.beginDraw();
+	  barSurface.background(225,221,202);
+	  barSurface.endDraw();
+	}
+
+	//Drawing code of Scoreboard UI
+	private void drawScoreboardSurface(){
+	  scoreboardSurface.beginDraw();
+	  scoreboardSurface.background(0,0);
+	  scoreboardSurface.stroke(255);
+	  scoreboardSurface.fill(0,0);
+	  scoreboardSurface.rect(0,0,scoreboardSurface.width-1, scoreboardSurface.height-1);
+	  scoreboardSurface.fill(0);
+	  scoreboardSurface.noStroke();
+	  String s = "Total score:\n" + String.format("%.3f",currentScore) ;
+	  scoreboardSurface.text(s, surfaceMargin, 0, 70, 80); 
+	  s = "Velocity:\n" + String.format("%.3f", ball.velocity.mag()) ;
+	  scoreboardSurface.text(s, surfaceMargin, (scoreboardSurface.width/3), 70, 80); 
+	  s = "Last Score:\n" + String.format("%.3f", lastScore) ;
+	  scoreboardSurface.text(s, surfaceMargin, (2*scoreboardSurface.width/3), 70, 80); 
+	  scoreboardSurface.endDraw();
+	}
+
+	private void updateScore(float gain){
+	  lastScore = gain;
+	  if(gain>=0){
+	      if (gain>0.5) { //"If" to avoid cheating by letting the ball on contact of cylinder
+	        currentScore += gain;
+	        scoreList.add(currentScore);
+	        
+	      }
+	       
+	  }else{
+	    currentScore += gain;
+	    if (currentScore<0) currentScore = 0;
+	    else scoreList.add(currentScore);
+	  }
+	  if(currentScore > maxScore) maxScore = currentScore;
+	  
+	}
+
+	//Drawing code of BarChart UI
+	private void drawBarChartSurface(){
+	  barChartSurface.beginDraw();
+	  barChartSurface.background(254,250,231);
+	   
+	  
+	  barChartSurface.noStroke();
+	  println(scoreList.size());
+	  
+	  for(int i=0; i<scoreList.size(); i++){
+	    
+	    float rectWidth = max(9*hs.getPos()+1,(barChartSurface.width/scoreList.size()));
+	    
+	    float rectHeight = scoreList.get(i)/maxScore * (barChartSurface.height-surfaceMargin);
+	    
+	    
+	    barChartSurface.fill(0,0,200);
+	    barChartSurface.rect(barChartSurface.width-(scoreList.size()-i)*rectWidth,barChartSurface.height + surfaceMargin - rectHeight,rectWidth, rectHeight); 
+	  }
+	  
+	  
+	  
+	  barChartSurface.endDraw();
+	}
+
+
+	//Function to draw the cylinders
+	private void drawCylinders() {
+	  pushMatrix();
+	  translate(0,-boxThickness/2, 0);
+	  for(int i=0; i<cylinders.size(); i++){
+	      pushMatrix();
+	      translate(cylinders.get(i).x, 0, cylinders.get(i).z);
+	      
+	      shape(cylinder,0,0); 
+	      popMatrix();
+	  }
+	  popMatrix();
+	  
+	}
+
+	public void keyPressed() {
+	  if (key == CODED) {
+	    if(keyCode == LEFT){
+	      rotateY -= 10*rotateSpeed;
+	    }
+	    else if (keyCode == RIGHT) {
+	      rotateY += 10*rotateSpeed;
+	    }
+	    else if (keyCode == SHIFT) {
+	      topView = true;
+	    }
+	  }
+	}
+
+	public void  keyReleased() {
+	  if (key == CODED) {
+	    if (keyCode == SHIFT) {
+	       topView = false;
+	    }
+	  }
+	}
+
+	public void mouseClicked(){
+	  //if topView is true, a cylinder is added where the mouse has been clicked
+	 if(topView){
+	   float x = (float) ((mouseX-width*0.5)/1.5);
+	   float y = (float) ((mouseY-height*0.5)/1.5);
+	   if( x < boxLength/2 && x > -boxLength/2 && y > -boxLength/2 && y < boxLength/2){
+	   cylinders.add(new PVector(x,0,y)); 
+	   }
+	 }
+	}
+
+	public void mouseDragged(){
+	  //if top view is false, the plan can be rotated. Otherwise, the plane stay still
+	  if(!topView){
+	    rotateZ -= rotateSpeed*(mouse_x-mouseX);
+	    if(rotateZ > PI/3) rotateZ = PI/3;
+	    else if (rotateZ < -PI/3)  rotateZ = -PI/3;
+	  
+	    rotateX += rotateSpeed*(mouse_y-mouseY);
+	    if(rotateX > PI/3) rotateX = PI/3;
+	     else if (rotateX < -PI/3)  rotateX = -PI/3;
+	  }
+	}
+
+	// Adjust the speed of rotation
+	public void mouseWheel(MouseEvent event){
+	 float e = event.getCount();
+	 rotateSpeed *= pow((float) 1.5,e);
+	}    
+    
+}
