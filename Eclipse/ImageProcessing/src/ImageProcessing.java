@@ -1,4 +1,12 @@
-import processing.core.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import processing.core.PApplet;
+import processing.core.PImage;
+import processing.core.PVector;
+import processing.video.*;
 
 /*
  * Several filter are available:
@@ -11,8 +19,9 @@ import processing.core.*;
  * 6- gaussianBlur
  * 7- Sobel
  * 8- Sobel on hue filter
+ * 9- Hough algorithm / edge detection
  * 
- * Simply choose the filter you want by using the keys '1,2,3,4,5,6,7' * 
+ * Simply choose the filter you want by using the keys '1,2,3,4,5,6,7,8,9' 
  * Choose image using arrow keys Up and Down
  */
 
@@ -29,6 +38,8 @@ public class ImageProcessing extends PApplet {
 	int imgNum;
 	HScrollBar thresholdBar1;
 	HScrollBar thresholdBar2;
+	
+	Capture cam;
 
 	public void setup() {
 		type=0;
@@ -40,6 +51,19 @@ public class ImageProcessing extends PApplet {
 		img2 = loadImage("../assets/lego_board/board2.jpg");
 		img3 = loadImage("../assets/lego_board/board3.jpg");
 		img4 = loadImage("../assets/lego_board/board4.jpg");
+
+		String[] cameras = Capture.list();
+		if(cameras.length == 0){
+			println("There are no cameras available for capture.");
+			exit();
+		} else {
+			println("Available cameras:");
+			for (int i = 0; i< cameras.length; i++){
+				println(cameras[i]);
+			}
+			cam = new Capture(this, cameras[0]);
+			cam.start();
+		}
 	}
 
 	public void draw() {
@@ -49,14 +73,19 @@ public class ImageProcessing extends PApplet {
 		threshold2 = (int) (thresholdBar2.getPos() * 255);
 
 		int display = 0;
-		
+
+		if(cam.available() == true) {
+			cam.read();
+		}
+
 		PImage img = createImage(img1.width, img2.height, RGB);
-		
+
 		switch(imgNum){
 		case 1: img = img1; break;
 		case 2: img = img2; break;
 		case 3: img = img3; break;
 		case 4: img = img4; break;
+		case 5: img = cam.get(); break;
 		}
 
 		switch(type){
@@ -69,9 +98,14 @@ public class ImageProcessing extends PApplet {
 		case 6: todisplay = gaussianBlur(img); display = 0;  break;
 		case 7: todisplay = sobel(img); display = 0;  break; 
 		case 8: todisplay = edgeDetection(img); display = 0; break;
+		case 9: todisplay = img; display = 0; break;
 		}
 
 		image(todisplay, 0, 0);
+
+		if(type == 9){
+			getIntersection(hough(edgeDetection(img)));
+		}
 
 		if(display == 2){
 			thresholdBar1.display();
@@ -86,11 +120,11 @@ public class ImageProcessing extends PApplet {
 	public void keyPressed() {
 		if(key== CODED){
 			if(keyCode == UP){
-				imgNum = min(4, imgNum+1);
+				imgNum = min(5, imgNum+1);
 			}
 			if(keyCode == DOWN){
 				imgNum = max(1, imgNum-1);
-				
+
 			}
 		}
 		if (key == '0') {
@@ -120,14 +154,17 @@ public class ImageProcessing extends PApplet {
 		if (key == '8') {
 			type = 8;
 		}
+		if (key == '9') {
+			type = 9;
+		}
 	}
-	
+
 	public PImage edgeDetection(PImage img){
-		
+
 		PImage result = createImage(width, height, RGB);
-		
+
 		result = sobel(hueFilter(saturationFilter(truncateIntensity(img, 191), 255, 61), 140, 96));
-				
+
 		return result;
 	}
 
@@ -175,7 +212,7 @@ public class ImageProcessing extends PApplet {
 		}
 		return result;
 	}
-	
+
 	public PImage saturationFilter(PImage img, int threshold1, int threshold2) {
 		PImage result = createImage(width, height, RGB);
 		for (int i = 0; i < img.width; i++) {
@@ -331,4 +368,160 @@ public class ImageProcessing extends PApplet {
 
 		return result;
 	}
+
+	public ArrayList<PVector> hough(PImage edgeImg){
+		float discretizationStepsPhi = 0.06f;
+		float discretizationStepsR = 2.5f;
+
+		//dimensions of the accumulator
+		int phiDim = (int) (Math.PI/ discretizationStepsPhi);
+		int rDim = (int) (((edgeImg.width + edgeImg.height) * 2+1)/discretizationStepsR);
+		// our accumulator (with a 1 pixel margin around)
+		
+		
+		int[] accumulator = new int[(phiDim + 2) *(rDim + 2)];
+
+		//Fill the accumulator: on edge points (ie. white pixels of the edge image), store all possible (r, phi) pairs describing lines going through the point.
+		for(int y=0; y<edgeImg.height; y++){
+			for(int x=0; x< edgeImg.width; x++){
+				//Are we on an edge?
+				if(brightness(edgeImg.pixels[y * edgeImg.width + x]) !=0){
+					for(int phi=0; phi < phiDim; phi++){;
+					float p = phi*discretizationStepsPhi;
+					float r = x*cos(p) + y*sin(p);
+
+					int rAcc = (int) ( r/discretizationStepsR + (rDim -1 )*0.5f);
+					accumulator[((phi+1)*(rDim+2) + rAcc)] += 1;
+					}
+				}
+			}
+		}
+		int minVotes = 150;
+
+		ArrayList<Integer> bestCandidates = new ArrayList<Integer>();
+
+
+		//size of the region we search for a local maximum
+		int  neighbourhood = 10;
+
+		for(int accR = 0; accR < rDim; accR++){
+			for(int accPhi = 0; accPhi < phiDim; accPhi++){
+				//compute current index int the accumulator
+				int idx = (accPhi +1)*(rDim+2) + accR +1;
+
+				if(accumulator[idx] > minVotes){
+					boolean bestCandidate = true;
+
+					//iterate over the neighbourhood
+					for(int dPhi= -neighbourhood/2; dPhi < neighbourhood/2+1; dPhi++){
+						//check if we are not outside the image
+						if(accPhi+dPhi < 0 || accPhi+dPhi >= phiDim) continue;
+
+						for(int dR=-neighbourhood/2; dR < neighbourhood/2+1; dR++){
+							//check if we are not outside the image
+							if(accR+dR < 0 || accR+dR >= rDim) continue;
+
+							int neighbourIdx = (accPhi + dPhi + 1) * (rDim +2) + accR + dR +1;
+
+							if(accumulator[idx] < accumulator[neighbourIdx]){
+								//current idx is not a local maximum!
+								bestCandidate = false;
+								break;
+							}
+						}
+						if(!bestCandidate) break;
+
+					}
+					if(bestCandidate){
+						//the current idx *is* a local maximum
+						bestCandidates.add(idx);
+					}
+				}
+			}
+		}
+
+
+		Collections.sort(bestCandidates, new HoughComparator(accumulator));
+		
+		ArrayList<PVector> lines = new ArrayList<PVector>();
+		
+		for (int i = 0; i < bestCandidates.size(); i++){
+			//first, compute back the (r, phi) polar coordinates:
+			int idx = bestCandidates.get(i);
+			int accPhi = (int) (idx/(rDim +2)) -1;
+			int accR = idx -(accPhi +1) * (rDim + 2) -1;
+			float r = (accR -(rDim -1) * 0.5f) * discretizationStepsR;
+			float phi = accPhi * discretizationStepsPhi;
+			lines.add(new PVector(r, phi));
+			displayLine(r,  phi, edgeImg);
+		}
+		
+		return lines;
+
+	}
+
+	public ArrayList<PVector> getIntersection(List<PVector> lines){
+		for(int i=0; i< lines.size() - 1 ; i++){
+			PVector line1 = lines.get(i);
+			
+			for(int j=i+1; j< lines.size(); j++){
+				PVector line2 = lines.get(j);
+				
+				float d = cos(line2.y)*sin(line1.y) -cos(line1.y)*sin(line2.y);
+				float x = (line2.x*sin(line1.y)-line1.x*sin(line2.y))/d;
+				float y = (-line2.x*cos(line1.y)+line1.x*cos(line2.y))/d;
+				
+				fill(255, 128, 0);
+				ellipse(x, y, 10, 10);
+			}
+		}
+		return null;
+
+	}
+	
+	public void displayLine(float r, float phi, PImage edgeImg){
+		//cartesian equation of a line: y= ax+b;
+		//in polar: y= (-cos(phi)/sin(phi))x + r/sin(phi))
+		//=> y=0: x= r/cos(phi)
+		//=> x=0: y= r/sin(pi)
+
+		//compute the intersection of this line with the 4 borders of the image
+		int x0 = 0;
+		int y0 = (int) (r / sin(phi));
+		int x1 = (int) (r / cos(phi));
+		int y1 = 0;
+		int x2 = edgeImg.width;
+		int y2 = (int) (-cos(phi)/sin(phi)*x2 + r/sin(phi));
+		int y3 = edgeImg.width;
+		int x3 = (int) (-(y3-r/sin(phi))*(sin(phi)/cos(phi)));
+
+		//finally plot the line
+		stroke(204, 102, 0);
+		if(y0 > 0){
+			if(x1 > 0) line(x0, y0, x1, y1);
+			else if(y2 > 0) line(x0,  y0,  x2,  y2);
+			else line(x0, y0, x3, y3);
+		}
+		else{
+			if(x1 > 0){
+				if(y2 > 0) line(x1,  y1,  x2, y2);
+				else line(x1, y1, x3, y3);						
+			}
+			else line(x2, y2, x3, y3);
+		}
+	}
+
+	class HoughComparator implements Comparator<Integer>{
+		int[] accumulator;
+		public HoughComparator(int[] acc){
+			accumulator = acc;
+		}
+		@Override
+		public int compare(Integer o1, Integer o2) {
+			if((accumulator[o1] > accumulator[o2]) || (accumulator[o1] == accumulator[o2] && o1 < o2)) return -1;
+			return 1;
+		}
+
+	}
+
 }
