@@ -1,0 +1,22 @@
+2 Threads:
+Thread 1 done in 26236ns
+Thread 2 done in 27421ns
+Shapes Loading: 28855
+
+4 Threads:
+Thread 1 done in 20571ns
+Thread 2 done in 21689ns
+Thread 3 done in 21867ns
+Thread 4 done in 22501ns
+Shapes Loading: 23899
+
+8 Threads:
+Thread 1 done in 21065ns
+Thread 3 done in 22831ns
+Thread 6 done in 24699ns
+Thread 8 done in 26797ns
+Thread 7 done in 26868ns
+Thread 4 done in 26925ns
+Thread 2 done in 27280ns
+Thread 5 done in 27954ns
+Shapes Loading: 29484
