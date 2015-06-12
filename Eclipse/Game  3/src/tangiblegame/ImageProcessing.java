@@ -31,19 +31,29 @@ import processing.video.*;
 public class ImageProcessing{
 
 	PApplet parent;
-	Movie cam;
 
 	static float[] tabSin;
 	static float[] tabCos;
 	static float discretizationStepsPhi = 0.03f;
 	static float discretizationStepsR = 1.25f;
+	
+	int sat_threshold1;
+	int sat_threshold2;
+	int hue_threshold1;
+	int hue_threshold2;
+	int int_threshold;
+	
 	// dimensions of the accumulator
 	int phiDim = (int) (Math.PI / discretizationStepsPhi);
 
-	public ImageProcessing(PApplet parent, Movie cam2){
+	public ImageProcessing(PApplet parent, int st1, int st2, int ht1, int ht2, int bt ){
 		this.parent = parent;
-
-		this.cam = cam2;
+		
+		this.sat_threshold1 = st1;
+		this.sat_threshold2 = st2;
+		this.hue_threshold1 = ht1;
+		this.hue_threshold2 = ht2;
+		this.int_threshold = bt;
 
 		tabSin = new float[phiDim];
 		tabCos = new float[phiDim];
@@ -55,14 +65,22 @@ public class ImageProcessing{
 			tabCos[accPhi] = (float) (Math.cos(ang) * inverseR);
 		}
 	}
+	
+	public void setThreshold(int st1, int st2, int ht1, int ht2, int bt ){		
+		this.sat_threshold1 = st1;
+		this.sat_threshold2 = st2;
+		this.hue_threshold1 = ht1;
+		this.hue_threshold2 = ht2;
+		this.int_threshold = bt;
+	}
 
 	public PImage improvedEdgeDetection(PImage img) {
 		
 		PImage result = new PImage(img.width, img.height, PApplet.RGB);
 
 		result = binaryIntensity(
-				gaussianBlur(saturation_hue(img, 255, 100, 133, 38)),
-				65);
+				gaussianBlur(saturation_hue(img, sat_threshold1, sat_threshold2, hue_threshold1, hue_threshold2)),
+				int_threshold);
 		
 		ArrayList<Thread> th = new ArrayList<Thread>();
 		int steps = img.height / 16;
@@ -111,6 +129,37 @@ public class ImageProcessing{
 
 		}
 
+		return result;
+	}
+	
+	public PImage hueFilter(PImage img, int threshold1, int threshold2) {
+		PImage result = parent.createImage(img.width, img.height, PApplet.RGB);
+		for (int i = 0; i < img.width; i++) {
+			for (int j = 0; j < img.height; j++) {
+				int c = img.get(i, j);
+				if (parent.hue(c) > threshold1 || parent.hue(c) < threshold2)
+					c = 0;
+				else
+					c = 255;
+				result.set(i, j, parent.color(c));
+			}
+
+		}
+		return result;
+	}
+
+	public PImage saturationFilter(PImage img, int threshold1, int threshold2) {
+
+		PImage result = parent.createImage(img.width, img.height, PApplet.RGB);
+		for (int i = 0; i < img.width; i++) {
+			for (int j = 0; j < img.height; j++) {
+				int c = img.get(i, j);
+				if (parent.saturation(c) > threshold1 || parent.saturation(c) < threshold2)
+					c = 0;
+				result.set(i, j, parent.color(c));
+			}
+
+		}
 		return result;
 	}
 
@@ -310,7 +359,7 @@ public class ImageProcessing{
 	}
 
 	public PVector getRotation(List<PVector> lines, int width, int height) {
-		System.out.println("Lines Size: " + lines.size());
+	//	System.out.println("Lines Size: " + lines.size());
 		List<PVector> smallLines = lines.subList(0, Math.min(lines.size(), 6));
 		QuadGraph graph = new QuadGraph();
 		graph.build(smallLines, width, height);
@@ -354,7 +403,7 @@ public class ImageProcessing{
 			rot.z += 1.0*(v.z)/rotations.size();
 		}
 
-		System.out.println(rot.x + " --- " + rot.y + " --- " + rot.z);
+		//System.out.println(rot.x + " --- " + rot.y + " --- " + rot.z);
 
 		return rot;
 	}

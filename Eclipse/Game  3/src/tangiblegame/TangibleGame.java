@@ -1,4 +1,6 @@
 package tangiblegame;
+
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -11,10 +13,13 @@ import processing.core.PVector;
 import processing.event.MouseEvent;
 import processing.opengl.PGraphicsOpenGL;
 import processing.opengl.PShapeOpenGL;
+import processing.video.Capture;
 import processing.video.Movie;
 
 @SuppressWarnings("serial")
 public class TangibleGame extends PApplet{
+
+	static final String BASEPATH = "../assets/";
 
 	public static float rotateY = 0;
 	public static float rotateZ = 0;
@@ -33,7 +38,7 @@ public class TangibleGame extends PApplet{
 
 	public PShape[] cylindersShape;
 	public static ArrayList<Tower> cylinders = new ArrayList<Tower>();
-	public static int numberFrames = 45;
+	public static int numberFrames = 90;
 	public static PImage texture;
 
 	public static boolean topView = false; //true = top view mode activated ; false= Top view not activated
@@ -73,41 +78,85 @@ public class TangibleGame extends PApplet{
 
 	public static PImage logo;
 
-	Movie cam;
+	Movie video;
+	Capture cam;
+	boolean isVideo;
 	ImageProcessing imgPro;
+	int setup;
+
+	int threshold1;
+	int threshold2;
+	HScrollbar thresholdBar1;
+	HScrollbar thresholdBar2;
+
+	int sat_threshold1;
+	int sat_threshold2;
+	int hue_threshold1;
+	int hue_threshold2;
+	int int_threshold;
 
 	public void setup() {
 
 		sw.start();
-		size(800,800,P3D);	
+		size(800,800,P3D);  
 
 		originalMartix = (PMatrix3D) getMatrix();
 
 		frameRate(60);
 
 		noStroke();
-		sw.stop();		
+		sw.stop();      
 
-		//TODO Charge la vidéo
-		cam = new Movie(this,  "../assets/testvideo.mp4");
-		cam.loop();
-		imgPro = new ImageProcessing(this, cam);
-		//END TODO
+		//charger la video: utiliser un absolute path
+		System.out.println("Setup movie");
+		video = new Movie(this,  BASEPATH+"testvideo.mov");
+
+		imgPro = new ImageProcessing(this, 255, 100, 133, 38, 65);
+
+		if(video.height !=0){
+			isVideo = true;       
+			setup = Integer.MAX_VALUE;
+			System.out.println("Movie: video: name: " + video.filename + " height: " + video.height + " width: " + video.width);
+			video.loop();
+		}
+		else{
+			String[] cameras = Capture.list();
+			if (cameras.length == 0) {
+				println("There are no cameras available for capture.");
+				exit();
+			} else {
+				println("Available cameras:");
+				for (int i = 0; i < cameras.length; i++) {
+					println(cameras[i]);
+				}
+				cam = new Capture(this, cameras[1]);
+				cam.start();
+			}
+
+			setup = 0;
+			isVideo = false;
+		}
+
+		thresholdBar1 = new HScrollbar(0, 550, 800, 20, this);
+		thresholdBar2 = new HScrollbar(0, 580, 800, 20, this);		
 
 		System.out.println("Create window : " + sw.getElapsedTime());
 
 		loading = true;
 
-		logo = loadImage("../assets/Logo.png");
+		logo = loadImage(BASEPATH+"Logo.png");
 
 		thread("load");
 
 	}
 
 
-	public void draw(){	
+	public void draw(){ 
 		if(loading){
 			loadingScreen();
+		}
+		else if(!isVideo && setup<Integer.MAX_VALUE){
+			camSetup();
 		}
 		else {
 			game();
@@ -122,11 +171,11 @@ public class TangibleGame extends PApplet{
 
 		noStroke();
 
-		//Draw Game	
+		//Draw Game 
 
 		pushMatrix();
 
-		//Normal Camera if topView is false
+		//Normal videoera if topView is false
 		if(!topView){
 			camera(0, -350, 850, ball.location.x, ball.location.y, ball.location.z, 0, 1, 0);
 		} 
@@ -137,14 +186,14 @@ public class TangibleGame extends PApplet{
 		ambientLight(200, 200, 200);
 
 
-		pushMatrix();		
+		pushMatrix();       
 
 		//Rotation of plane
 		rotateZ(rotateZ);
 		rotateY(rotateY);
 		rotateX(rotateX);
 
-		//Camera on top of pane if topView is true
+		//videoera on top of pane if topView is true
 		if(topView){
 			camera(0, -850, 0, 0, 0, 0, 0, 0, 1);
 		}
@@ -156,8 +205,8 @@ public class TangibleGame extends PApplet{
 
 		//draw the plane
 		/*fill(0,100,0,255);
-		box(boxLength,boxThickness,boxLength); 
-		fill(255);
+        box(boxLength,boxThickness,boxLength); 
+        fill(255);
 		 */
 		shape(background,0,1);
 
@@ -204,12 +253,24 @@ public class TangibleGame extends PApplet{
 
 		//TODO: Tangible: Affichage de la vidéo
 		// Ne fonctionne pas... je ne sais pas pourquoi...
-		if (cam.available() == true) {
-			cam.read(); 
+		PImage img;
+		if(isVideo){
+			if (video.available() == true) {
+				video.read(); 
+			}
+			img = video.get();
 		}
-		image(cam, width/2, height/2);
-		//END TODO
+		else{
+			if (cam.available() == true) {
+				cam.read();
+			}
+			img = cam.get();
+		}
 
+		img.resize(img.width/4, img.height/4);
+		image(img, 0, 0);
+
+		//END TODO
 		hs.update();
 		hs.display();
 
@@ -217,7 +278,8 @@ public class TangibleGame extends PApplet{
 
 		hint(ENABLE_DEPTH_TEST);
 		popMatrix();
-		popMatrix();;
+		popMatrix();
+
 	}
 
 
@@ -251,19 +313,68 @@ public class TangibleGame extends PApplet{
 		}
 	}
 
-	/*TODO: Tangible: Thread pour calculer la rotation de la plaque. 
-		Le Thread fonctionne plus ou moins avec des images: le jeux "clignotte" de temps en temps
-		Mais ne fonctionne pas avec la webcam, ni la vidéo (du moins chez moi?)
-	*/
-	public void tangible(){	
-		while(true){
+	public void camSetup(){
 
-			PVector rot = imgPro.getRotation(cam.get());
+		if (cam.available() == true) {
+			cam.read();
+		}    	
 
-			rotateZ=rot.z;
-			rotateY=rot.y;
-			rotateX=rot.x;
+		background(color(0, 0, 0));
+		PImage img = cam.get();
+		PImage toDisplay = img;
+		String text = "";
+
+		threshold1 = (int) (thresholdBar1.getPos() * 255);
+		threshold2 = (int) (thresholdBar2.getPos() * 255);
+
+		thresholdBar1.display();
+		thresholdBar1.update();
+		if (setup != 2) {
+			thresholdBar2.display();
+			thresholdBar2.update();
 		}
+
+		color(250);
+
+		switch(setup){
+		case 0:
+			toDisplay = imgPro.saturationFilter(img, threshold1, threshold2);
+			text = "Choose maximum and minimum saturation level --- Press \"ENTER\" key to validate";
+			break;
+		case 1:
+			toDisplay = imgPro.saturation_hue(img, sat_threshold1, sat_threshold2, threshold1, threshold2);
+			text = "Choose maximum and minimum hue level --- Press \"ENTER\" key to validate";
+			break;
+		case 2:
+			toDisplay = imgPro.binaryIntensity(imgPro.gaussianBlur(imgPro.saturation_hue(img, sat_threshold1, sat_threshold2, hue_threshold1, hue_threshold2)),threshold1);
+			text = "Choose intensity threshold level --- Press \"ENTER\" key to validate";
+			break;
+		}
+
+		image(toDisplay, 0, 0);
+		text(text, width/2, 530);
+
+
+
+
+	}
+
+	/*TODO: Tangible: Thread pour calculer la rotation de la plaque. 
+        Le Thread fonctionne plus ou moins avec des images: le jeux "clignotte" de temps en temps
+        Mais ne fonctionne pas avec la webvideo, ni la vidéo (du moins chez moi?)
+	 */
+	public void tangible(){ 
+		PImage img;
+		if(isVideo){
+			img = video.get();
+		}
+		else img = cam.get();
+
+		PVector rot = imgPro.getRotation(img);
+
+		rotateZ=rot.z;
+		rotateY=rot.y;
+		rotateX=rot.x;
 
 	}
 	//END TODO
@@ -273,7 +384,7 @@ public class TangibleGame extends PApplet{
 
 		percent += 1/(10.0f+numberFrames);
 
-		texture = loadImage("../assets/textures/Textures_all.png");
+		texture = loadImage(BASEPATH+"textures/Textures_all.png");
 
 		percent += 1/(9.0f+numberFrames);
 
@@ -287,19 +398,19 @@ public class TangibleGame extends PApplet{
 
 		sw.stop();
 		System.out.println("Interface : " + sw.getElapsedTime());
-		background = loadShape("../assets/tower.obj");
+		background = loadShape(BASEPATH+"tower.obj");
+		//System.out.println("background ok");
 		background.scale(1.75f);
 		sw.start();
 		cylindersShape = loadCylinder();
 		sw.stop();
 		System.out.println("Shapes Loading: " + sw.getElapsedTime());
 		warmup = true;
-		thread("tangible");
 	}
 
 	PShape[] loadCylinder() {
 		PShape[] cubeframe = new PShape[numberFrames];
-		cubeframe[0] = new AnimatedPShape(this, "../assets/cylinder/tower.obj", texture);
+		cubeframe[0] = new AnimatedPShape(this, BASEPATH+"cylinder/tower.obj", texture);
 		int prevTextureMode = this.g.textureMode;
 		this.g.textureMode = NORMAL;
 		PShapeOpenGL p3d = PShapeOpenGL.createShape3D((PGraphicsOpenGL)this.g, cubeframe[0]);
@@ -312,7 +423,7 @@ public class TangibleGame extends PApplet{
 		percent += (float) 1/(1.0f*numberFrames);
 		ArrayList<Thread> th = new ArrayList<Thread>();
 		int nTh = 8;
-		for(int i=1; i <= nTh; i++){			
+		for(int i=1; i <= nTh; i++){            
 			th.add(new Thread(new loadCylinderPar(max(1,(i-1)*cubeframe.length/nTh), i*cubeframe.length/nTh, cubeframe, this, i, texture)));
 		}
 		for(int i=0; i<th.size(); i++){
@@ -424,6 +535,25 @@ public class TangibleGame extends PApplet{
 			}
 			else if (keyCode == SHIFT) {
 				topView = true;
+			}
+		}
+		else if(keyCode == 10 ) {
+			switch(setup){
+			case 0:
+				sat_threshold1 = threshold1;
+				sat_threshold2 = threshold2;
+				setup = 1;
+				break;
+			case 1:
+				hue_threshold1 = threshold1;
+				hue_threshold2 = threshold2;
+				setup = 2;
+				break;
+			case 2:
+				int_threshold = threshold1;
+				imgPro.setThreshold(sat_threshold1, sat_threshold2, hue_threshold1, hue_threshold2, int_threshold);
+				setup = Integer.MAX_VALUE;
+				break;
 			}
 		}
 	}

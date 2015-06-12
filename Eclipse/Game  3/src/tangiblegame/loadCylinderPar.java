@@ -27,7 +27,7 @@ public class loadCylinderPar implements Runnable {
 		StopWatch sw = new StopWatch();
 		sw.start();
 		for(int i = from; i < to; i++){
-			String name = "../assets/cylinder/destruction_tower_000";
+			String name = TangibleGame.BASEPATH + "cylinder/destruction_tower_000";
 			if(i<10) name += "00"+i+".obj";
 			else if (i<100) name += "0" + i+".obj";
 			else name += i + ".obj";

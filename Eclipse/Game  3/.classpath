@@ -5,7 +5,6 @@
 	<classpathentry kind="lib" path="C:/Users/quent_000/Desktop/processing-2.2.1/modes/java/libraries/video/library/gstreamer-java.jar"/>
 	<classpathentry kind="lib" path="C:/Users/quent_000/Desktop/processing-2.2.1/modes/java/libraries/video/library/jna.jar"/>
 	<classpathentry kind="lib" path="C:/Users/quent_000/Desktop/processing-2.2.1/modes/java/libraries/video/library/video.jar"/>
-	<classpathentry kind="lib" path="C:/Users/quent_000/OneDrive/EPFL/4eme_semestre/Introduction à l&apos;informatique visuelle/projet/CS211_Project/Eclipse/Processing Libraries/papaya/library/papaya.jar"/>
 	<classpathentry kind="lib" path="C:/Users/quent_000/Desktop/processing-2.2.1/core/library/core.jar"/>
 	<classpathentry kind="lib" path="C:/Users/quent_000/Desktop/processing-2.2.1/core/library/gluegen-rt.jar"/>
 	<classpathentry kind="lib" path="C:/Users/quent_000/Desktop/processing-2.2.1/core/library/gluegen-rt-natives-linux-amd64.jar"/>
@@ -21,6 +20,7 @@
 	<classpathentry kind="lib" path="C:/Users/quent_000/Desktop/processing-2.2.1/core/library/jogl-all-natives-macosx-universal.jar"/>
 	<classpathentry kind="lib" path="C:/Users/quent_000/Desktop/processing-2.2.1/core/library/jogl-all-natives-windows-amd64.jar"/>
 	<classpathentry kind="lib" path="C:/Users/quent_000/Desktop/processing-2.2.1/core/library/jogl-all-natives-windows-i586.jar"/>
-	<classpathentry kind="lib" path="C:/Users/quent_000/OneDrive/EPFL/4eme_semestre/Introduction à l&apos;informatique visuelle/projet/CS211_Project/Eclipse/Processing Libraries/G4P/library/G4P.jar"/>
+	<classpathentry kind="lib" path="C:/Users/quent_000/Desktop/papaya/library/papaya.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files (x86)/Java/jre1.8.0_40/lib/ext/qtjava.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

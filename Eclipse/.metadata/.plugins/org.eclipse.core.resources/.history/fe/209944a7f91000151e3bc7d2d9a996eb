@@ -1,0 +1,30 @@
+package test;
+
+import processing.core.PApplet;
+import processing.video.*;
+
+@SuppressWarnings("serial")
+public class TestMain extends PApplet{
+	
+	Movie movie;
+
+	public void setup() {
+	  size(640, 360);
+	  background(0);
+	  // Load and play the video in a loop
+	  movie = new Movie(this, "../data/testvideo.mov");
+	  movie.loop();
+	  System.out.println("Movie: cam: name: " + movie.filename + " height: " + movie.height + " width: " + movie.width);
+	}
+
+	void movieEvent(Movie m) {
+	  m.read();
+	}
+
+	public void draw() {
+	  //if (movie.available() == true) {
+	  //  movie.read(); 
+	  //}
+	  image(movie, 0, 0, width, height);
+	}
+}
