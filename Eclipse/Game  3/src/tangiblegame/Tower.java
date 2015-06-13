@@ -22,7 +22,7 @@ public class Tower {
 	}
 	
 	public int getSafeDistance(){
-		return 10;
+		return 20;
 	}
 
 	public PVector getPosition(){

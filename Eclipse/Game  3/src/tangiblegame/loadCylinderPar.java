@@ -37,7 +37,6 @@ public class loadCylinderPar implements Runnable {
 			parent.g.textureMode = PConstants.NORMAL;
 			PShapeOpenGL p3d = PShapeOpenGL.createShape3D((PGraphicsOpenGL)parent.g, frame[i]);
 			parent.g.textureMode = prevTextureMode;
-			p3d.scale(0.5f);
 			frame[i] = p3d;
 			if(frame[i]==null){
 				throw new IllegalArgumentException("loadShape() return null");

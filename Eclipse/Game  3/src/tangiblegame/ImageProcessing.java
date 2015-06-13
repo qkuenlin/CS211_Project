@@ -121,10 +121,11 @@ public class ImageProcessing{
 				if (parent.saturation(c) > satThreshold1 || parent.saturation(c) < satThreshold2)
 					c = 0;
 				if (parent.hue(c) > hueThreshold1 || parent.hue(c) < hueThreshold2)
-					c = 0;
+					c = 0x000000;
 				else
-					c = 255;
-				result.set(i, j, parent.color(c));
+					c = 0xFFFFFF;
+				result.set(i, j, c);
+				
 			}
 
 		}
@@ -138,10 +139,10 @@ public class ImageProcessing{
 			for (int j = 0; j < img.height; j++) {
 				int c = img.get(i, j);
 				if (parent.hue(c) > threshold1 || parent.hue(c) < threshold2)
-					c = 0;
+					c = 0x000000;
 				else
-					c = 255;
-				result.set(i, j, parent.color(c));
+					c = 0xFFFFFF;
+				result.set(i, j, c);
 			}
 
 		}
@@ -155,8 +156,8 @@ public class ImageProcessing{
 			for (int j = 0; j < img.height; j++) {
 				int c = img.get(i, j);
 				if (parent.saturation(c) > threshold1 || parent.saturation(c) < threshold2)
-					c = 0;
-				result.set(i, j, parent.color(c));
+					c = 0x000000;
+				result.set(i, j, c);
 			}
 
 		}
@@ -169,10 +170,10 @@ public class ImageProcessing{
 			for (int j = 0; j < img.height; j++) {
 				int c = img.get(i, j);
 				if (parent.brightness(c) > threshold)
-					c = 255;
+					c = 0xFFFFFF;
 				else
-					c = 0;
-				result.set(i, j, parent.color(c));
+					c = 0x000000;
+				result.set(i, j, c);
 			}
 
 		}
@@ -188,9 +189,9 @@ public class ImageProcessing{
 
 		for (int x = 0; x < img.width; x++) {
 			for (int y = 0; y < img.height; y++) {
-				int red = 0;
-				int green = 0;
-				int blue = 0;
+				int red = 0x0;
+				int green = 0x0;
+				int blue = 0x0;
 				for (int i = 0; i <= 2; i++) {
 					for (int j = 0; j <= 2; j++) {
 						int clampedX = 0;
@@ -218,7 +219,7 @@ public class ImageProcessing{
 
 					}
 				}
-				result.pixels[y * img.width + x] = parent.color(red, green, blue);
+				result.pixels[y * img.width + x] = red*0x10000 + green*0x100 + blue;
 			}
 
 		}
@@ -402,8 +403,13 @@ public class ImageProcessing{
 			rot.y += 1.0*(v.y)/rotations.size();
 			rot.z += 1.0*(v.z)/rotations.size();
 		}
+		
+		rot.x *= -1;
+		float tmp = rot.z;
+		rot.z = rot.y*-1;
+		rot.y = tmp;
 
-		//System.out.println(rot.x + " --- " + rot.y + " --- " + rot.z);
+		System.out.println(rot.x + " --- " + rot.y + " --- " + rot.z);
 
 		return rot;
 	}
@@ -413,7 +419,7 @@ public class ImageProcessing{
 		PVector b = quad.get(2);
 		PVector center = new PVector((a.x+b.x)/2,(a.y+b.y)/2);
 		Collections.sort(quad,new CWComparator(center));
-		//TODO:
+		
 		int best = 1;
 		for (int i = 0; i < quad.size(); i++) {
 			if (Math.sqrt(quad.get(i).x*quad.get(i).x+quad.get(i).y*quad.get(i).y)<Math.sqrt(quad.get(best).x*quad.get(best).x+quad.get(best).y*quad.get(best).y)) best=i;
@@ -465,7 +471,7 @@ class sobelRunnable implements Runnable {
 		int[][] vkernel = { { 0, 0, 0 }, { 1, 0, -1 }, { 0, 0, 0 } };
 
 		for (int i = from; i < to; i++) {
-			result.pixels[i] = parent.color(0);
+			result.pixels[i] = 0x000000;
 		}
 
 		float max = 0;
@@ -512,9 +518,9 @@ class sobelRunnable implements Runnable {
 		for (int y = downbound; y < upperbound; y++) {
 			for (int x = 2; x < img.width - 2; x++) {
 				if (buffer[y * img.width + x] > (int) (max * 0.3f)) {
-					result.pixels[y * img.width + x] = parent.color(255);
+					result.pixels[y * img.width + x] = 0xFFFFFF;
 				} else {
-					result.pixels[y * img.width + x] = parent.color(0);
+					result.pixels[y * img.width + x] = 0x000000;
 				}
 			}
 		}

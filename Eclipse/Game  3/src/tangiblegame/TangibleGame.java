@@ -1,6 +1,5 @@
 package tangiblegame;
 
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -43,7 +42,7 @@ public class TangibleGame extends PApplet{
 
 	public static boolean topView = false; //true = top view mode activated ; false= Top view not activated
 
-	Ball ball = new Ball(10, this);
+	Ball ball = new Ball(20, this);
 
 	PGraphics gameOverviewSurface;
 	PGraphics barSurface;
@@ -110,10 +109,11 @@ public class TangibleGame extends PApplet{
 		//charger la video: utiliser un absolute path
 		System.out.println("Setup movie");
 		video = new Movie(this,  BASEPATH+"testvideo.mov");
+		video.play();
 
-		imgPro = new ImageProcessing(this, 255, 100, 133, 38, 65);
+		imgPro = new ImageProcessing(this, 255, 22, 127, 98, 236);
 
-		if(video.height !=0){
+		if(video.duration() != 0){
 			isVideo = true;       
 			setup = Integer.MAX_VALUE;
 			System.out.println("Movie: video: name: " + video.filename + " height: " + video.height + " width: " + video.width);
@@ -161,6 +161,7 @@ public class TangibleGame extends PApplet{
 		else {
 			game();
 		}
+		System.out.println(frameRate);
 
 
 	}
@@ -189,9 +190,12 @@ public class TangibleGame extends PApplet{
 		pushMatrix();       
 
 		//Rotation of plane
-		rotateZ(rotateZ);
-		rotateY(rotateY);
-		rotateX(rotateX);
+		synchronized (DXF) {
+			rotateZ(rotateZ);
+			rotateY(rotateY);
+			rotateX(rotateX);
+		}
+
 
 		//videoera on top of pane if topView is true
 		if(topView){
@@ -270,6 +274,8 @@ public class TangibleGame extends PApplet{
 		img.resize(img.width/4, img.height/4);
 		image(img, 0, 0);
 
+		//tangible();
+
 		//END TODO
 		hs.update();
 		hs.display();
@@ -279,6 +285,8 @@ public class TangibleGame extends PApplet{
 		hint(ENABLE_DEPTH_TEST);
 		popMatrix();
 		popMatrix();
+
+		System.out.println(frameRate);
 
 	}
 
@@ -334,7 +342,7 @@ public class TangibleGame extends PApplet{
 			thresholdBar2.update();
 		}
 
-		color(250);
+		fill(250);
 
 		switch(setup){
 		case 0:
@@ -363,18 +371,23 @@ public class TangibleGame extends PApplet{
         Le Thread fonctionne plus ou moins avec des images: le jeux "clignotte" de temps en temps
         Mais ne fonctionne pas avec la webvideo, ni la vidéo (du moins chez moi?)
 	 */
-	public void tangible(){ 
+	public void tangible() {
+		
 		PImage img;
-		if(isVideo){
-			img = video.get();
+		while(true){
+
+			if(isVideo){
+				img = video.get();
+			}
+			else img = cam.get();
+
+			PVector rot = imgPro.getRotation(img);
+			synchronized (DXF){
+				rotateZ=rot.z;
+				rotateY=rot.y;
+				rotateX=rot.x;
+			}
 		}
-		else img = cam.get();
-
-		PVector rot = imgPro.getRotation(img);
-
-		rotateZ=rot.z;
-		rotateY=rot.y;
-		rotateX=rot.x;
 
 	}
 	//END TODO
@@ -406,6 +419,7 @@ public class TangibleGame extends PApplet{
 		sw.stop();
 		System.out.println("Shapes Loading: " + sw.getElapsedTime());
 		warmup = true;
+		thread("tangible");
 	}
 
 	PShape[] loadCylinder() {
@@ -415,7 +429,6 @@ public class TangibleGame extends PApplet{
 		this.g.textureMode = NORMAL;
 		PShapeOpenGL p3d = PShapeOpenGL.createShape3D((PGraphicsOpenGL)this.g, cubeframe[0]);
 		this.g.textureMode = prevTextureMode;
-		p3d.scale(0.5f);
 		cubeframe[0] = p3d;
 		if(cubeframe[0]==null){
 			throw new IllegalArgumentException("loadShape() return null");
