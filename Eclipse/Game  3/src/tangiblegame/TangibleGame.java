@@ -41,7 +41,7 @@ public class TangibleGame extends PApplet{
 
 	public PShape[] cylindersShape;
 	public static ArrayList<Tower> cylinders = new ArrayList<Tower>();
-	public static int numberFrames = 90;
+	public static int numberFrames = 90; //CHANGE THIS IF OUT OF MEMORY
 	public static PImage texture;
 
 	public static boolean topView = false; //true = top view mode activated ; false= Top view not activated
@@ -111,11 +111,11 @@ public class TangibleGame extends PApplet{
 		sw.stop();      
 
 		//charger la video: utiliser un absolute path
-		System.out.println("Setup movie");
+		/*System.out.println("Setup movie");
 		String currentVideo = sketchPath("testvideo.mov");
 		video = new Movie(this, currentVideo);
 		video.play();
-
+		 */
 		imgPro = new ImageProcessing(this, 255, 22, 127, 98, 236);
 		
 		/*
