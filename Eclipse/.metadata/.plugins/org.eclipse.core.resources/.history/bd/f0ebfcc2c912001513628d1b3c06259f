@@ -117,16 +117,14 @@ public class TangibleGame extends PApplet{
 		video.play();
 
 		imgPro = new ImageProcessing(this, 255, 22, 127, 98, 236);
-		
-		/*
+
 		if(video.duration() != 0){
 			isVideo = true;       
 			setup = Integer.MAX_VALUE;
 			System.out.println("Movie: video: name: " + video.filename + " height: " + video.height + " width: " + video.width);
 			video.loop();
 		}
-		*/
-		//else{
+		else{
 			String[] cameras = Capture.list();
 			if (cameras.length == 0) {
 				println("There are no cameras available for capture.");
@@ -142,7 +140,7 @@ public class TangibleGame extends PApplet{
 
 			setup = 0;
 			isVideo = false;
-		//}
+		}
 
 		thresholdBar1 = new HScrollbar(0, 550, 800, 20, this);
 		thresholdBar2 = new HScrollbar(0, 580, 800, 20, this);		

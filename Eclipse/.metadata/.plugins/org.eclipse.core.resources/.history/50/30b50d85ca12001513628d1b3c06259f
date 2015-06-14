@@ -19,7 +19,7 @@ import processing.video.Movie;
 public class TangibleGame extends PApplet{
 
 	static final String BASEPATH = "../assets/";
-	
+
 	public static float oldRotateY = 0;
 	public static float oldRotateZ = 0;
 	public static float oldRotateX = 0;
@@ -117,7 +117,7 @@ public class TangibleGame extends PApplet{
 		video.play();
 
 		imgPro = new ImageProcessing(this, 255, 22, 127, 98, 236);
-		
+
 		/*
 		if(video.duration() != 0){
 			isVideo = true;       
@@ -125,23 +125,23 @@ public class TangibleGame extends PApplet{
 			System.out.println("Movie: video: name: " + video.filename + " height: " + video.height + " width: " + video.width);
 			video.loop();
 		}
-		*/
+		 */
 		//else{
-			String[] cameras = Capture.list();
-			if (cameras.length == 0) {
-				println("There are no cameras available for capture.");
-				exit();
-			} else {
-				println("Available cameras:");
-				for (int i = 0; i < cameras.length; i++) {
-					println(cameras[i]);
-				}
-				cam = new Capture(this, cameras[1]);
-				cam.start();
+		String[] cameras = Capture.list();
+		if (cameras.length == 0) {
+			println("There are no cameras available for capture.");
+			exit();
+		} else {
+			println("Available cameras:");
+			for (int i = 0; i < cameras.length; i++) {
+				println(cameras[i]);
 			}
+			cam = new Capture(this, cameras[1]);
+			cam.start();
+		}
 
-			setup = 0;
-			isVideo = false;
+		setup = 0;
+		isVideo = false;
 		//}
 
 		thresholdBar1 = new HScrollbar(0, 550, 800, 20, this);
@@ -198,24 +198,24 @@ public class TangibleGame extends PApplet{
 
 		//Rotation of plane
 		synchronized (DXF) {
-			
+
 			float tmpZ = (rotateZ+oldRotateZ)/2;
 			float tmpY = (rotateY+oldRotateY)/2;
 			float tmpX = (rotateX+oldRotateX)/2;
-			
+
 			oldRotateX = rotateX;
 			oldRotateY = rotateY;
 			oldRotateZ = rotateZ;
-			
+
 			rotateZ = tmpZ;
 			rotateY = tmpY;
 			rotateX = tmpX;	
-			
-			
+
+
 			rotateZ(rotateZ);
 			rotateY(rotateY);
 			rotateX(rotateX);			
-			
+
 		}
 
 
@@ -394,7 +394,7 @@ public class TangibleGame extends PApplet{
         Mais ne fonctionne pas avec la webvideo, ni la vidéo (du moins chez moi?)
 	 */
 	public void tangible() {
-		
+
 		PImage img;
 		while(true){
 

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move element &apos;StopWatch.java&apos; to &apos;Game  3/src/tangiblegame&apos;&#x0D;&#x0A;- Original project: &apos;ImageProcessing&apos;&#x0D;&#x0A;- Destination element: &apos;Game  3/src/tangiblegame&apos;&#x0D;&#x0A;- Original element: &apos;StopWatch.java&apos;&#x0D;&#x0A;- Update references to refactored element" description="Move compilation unit" destination="=Game  3/src&lt;tangiblegame" element1="/src&lt;{StopWatch.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.move" policy="org.eclipse.jdt.ui.moveResources" qualified="false" references="true" stamp="1434309675195" units="1" version="1.0"/>
+</session>

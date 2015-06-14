@@ -8,6 +8,7 @@ import java.util.List;
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.core.PVector;
+import processing.video.*;
 
 /*
  * Several filter are available:

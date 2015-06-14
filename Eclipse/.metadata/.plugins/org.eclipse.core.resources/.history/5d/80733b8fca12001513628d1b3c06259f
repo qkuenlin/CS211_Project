@@ -142,7 +142,7 @@ public class TangibleGame extends PApplet{
 
 			setup = 0;
 			isVideo = false;
-		//}
+		}
 
 		thresholdBar1 = new HScrollbar(0, 550, 800, 20, this);
 		thresholdBar2 = new HScrollbar(0, 580, 800, 20, this);		
