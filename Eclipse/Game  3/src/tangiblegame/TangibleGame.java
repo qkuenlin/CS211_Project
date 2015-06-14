@@ -19,6 +19,10 @@ import processing.video.Movie;
 public class TangibleGame extends PApplet{
 
 	static final String BASEPATH = "../assets/";
+	
+	public static float oldRotateY = 0;
+	public static float oldRotateZ = 0;
+	public static float oldRotateX = 0;
 
 	public static float rotateY = 0;
 	public static float rotateZ = 0;
@@ -108,7 +112,8 @@ public class TangibleGame extends PApplet{
 
 		//charger la video: utiliser un absolute path
 		System.out.println("Setup movie");
-		video = new Movie(this,  BASEPATH+"testvideo.mov");
+		String currentVideo = sketchPath("testvideo.mov");
+		video = new Movie(this, currentVideo);
 		video.play();
 
 		imgPro = new ImageProcessing(this, 255, 22, 127, 98, 236);
@@ -190,10 +195,19 @@ public class TangibleGame extends PApplet{
 		pushMatrix();       
 
 		//Rotation of plane
-		synchronized (DXF) {
+		synchronized (DXF) {			
+			oldRotateX = rotateX;
+			oldRotateY = rotateY;
+			oldRotateZ = rotateZ;
+			
+			rotateZ = (rotateZ+oldRotateZ)/2;
+			rotateY = (rotateY+oldRotateY)/2;
+			rotateX = (rotateX+oldRotateX)/2;
+			
 			rotateZ(rotateZ);
 			rotateY(rotateY);
-			rotateX(rotateX);
+			rotateX(rotateX);			
+			
 		}
 
 
