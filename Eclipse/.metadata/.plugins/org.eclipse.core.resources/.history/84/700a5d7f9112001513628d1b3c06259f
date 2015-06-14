@@ -195,20 +195,14 @@ public class TangibleGame extends PApplet{
 		pushMatrix();       
 
 		//Rotation of plane
-		synchronized (DXF) {
-			
-			float tmpZ = (rotateZ+oldRotateZ)/2;
-			float tmpY = (rotateY+oldRotateY)/2;
-			float tmpX = (rotateX+oldRotateX)/2;
-			
+		synchronized (DXF) {			
 			oldRotateX = rotateX;
 			oldRotateY = rotateY;
 			oldRotateZ = rotateZ;
 			
-			rotateZ = tmpZ;
-			rotateY = tmpY;
-			rotateX = tmpX;	
-			
+			rotateZ = (rotateZ+oldRotateZ)/2;
+			rotateY = (rotateY+oldRotateY)/2;
+			rotateX = (rotateX+oldRotateX)/2;
 			
 			rotateZ(rotateZ);
 			rotateY(rotateY);
